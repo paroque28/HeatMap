@@ -10,7 +10,7 @@
 namespace po = boost::program_options;
 
 #include <iostream>
-#include <iterator>
+#include "src/heat.h"
 using namespace std;
 
 int main(int ac, const char* av[])
@@ -19,8 +19,13 @@ int main(int ac, const char* av[])
 
         po::options_description desc("Allowed options");
         desc.add_options()
-                ("help", "produce help message")
-                ("size", po::value<double>(), "set matrix size")
+                ("help,h", "produce help message")
+                ("size,s", po::value<uint>(), "set matrix size")
+                ("left,l",po::value<double>(), "set left border temperature")
+                ("right,r",po::value<double>(), "set right border temperature")
+                ("top,t",po::value<double>(), "set top border temperature")
+                ("bottom,b",po::value<double>(), "set bottom border temperature")
+                ("accurancy,a",po::value<double>(), "set accurancy for temperature (default 0.1)")
                 ;
 
         po::variables_map vm;
@@ -33,10 +38,28 @@ int main(int ac, const char* av[])
         }
 
         if (vm.count("size")) {
+            uint size = vm["size"].as<uint>();
             cout << "Matrix size was set to "
-                 << vm["size"].as<double>() << ".\n";
+                 << size << "\n";
+            if(!(vm.count("top") && vm.count("bottom") && vm.count("left") && vm.count("right")))
+            {
+                cout << "Border temperatures were not set.\n";
+                return 1;
+            }
+            //Set variables
+            double left,right,top,bottom;
+            left = vm["left"].as<double>();
+            right = vm["right"].as<double>();
+            top = vm["top"].as<double>();
+            bottom = vm["bottom"].as<double>();
+            //Solve for temperatures
+            double acc = 0.1;
+            if (vm.count("accurancy")) acc=vm["accurancy"].as<double>();
+            double* temp = getTemperatureMatrix(size, left, right, top, bottom,acc);
+            //double*** vectores = getVectores(temp);
         } else {
             cout << "Matrix size was not set.\n";
+            return 1;
         }
     }
     catch(exception& e) {

@@ -4,7 +4,7 @@ project(heatmap)
 set(CMAKE_CXX_STANDARD 11)
 
 set(SOURCE_FILES
-        main.cpp src/Liebmann.h)
+        main.cpp src/Liebmann.h src/heat.h)
 
 add_executable(heatmap ${SOURCE_FILES})
 
