@@ -123,7 +123,7 @@ T* getVectores(T* temp, unsigned int size)
 {
     T t [size][size][2] ;
     T* t_ptr = &(***t);
-    
+
 }
 
 #endif //HEATMAP_HEAT_H
