@@ -4,7 +4,7 @@
 
 #ifndef HEATMAP_HEAT_H
 #define HEATMAP_HEAT_H
-
+#define nthreads 10
 #include <iostream>
 
 template <typename  T>
@@ -19,24 +19,38 @@ void print(const std::string& str, T* matrix, unsigned int rows, unsigned int co
     printf("\n");
 }
 
+template <typename  T>
+void printvectors(const std::string& str, T* vector, unsigned int sizeVector, unsigned int sizeArray) {
+    std::cout << str << "\n";
+    for(int i = 0; i < sizeArray; i++) {
+        for (int j = 0; j < sizeVector; ++j) {
+            printf(" %8.3f", *(vector+(i*sizeVector)+j));
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
 
 template <typename  T>
 T* getTemperatureMatrix(unsigned int size, T left,T right, T top, T bottom, T accurancy)
 {
     unsigned int n = size*size;
-    T A [n][n], b[n],x[n], x_last[n], y[n];
+    T A [n][n], b[n], x_last[n], y[n];
+    T* x = static_cast<T*>(malloc(sizeof(T)*n));
     T* A_ptr = &(**A);
     memset (A_ptr,0,n*n*sizeof(T));
-    unsigned int i = 0, j = 0, k = 0, row = 0, col = 0;
+    unsigned int i = 0, j = 0, row = 0;
 
     //set x to prom
     T prom = (left+right+top+bottom)/4;
+
+    #pragma omp parallel for schedule(dynamic,5) private(i) num_threads(nthreads)
     for (i = 0; i < n; ++i) {
         x[i] = prom;
     }
-    print("x",x,size,size);
     //set b vector
-
+    #pragma omp parallel for schedule(dynamic,1) collapse(2) private(i,j,row) num_threads(nthreads)
     for (i = 0; i < size; ++i) {
         for (j = 0; j < size; ++j) {
             row = (i * size) + j; //rows on b, cols on A
@@ -105,11 +119,10 @@ T* getTemperatureMatrix(unsigned int size, T left,T right, T top, T bottom, T ac
                 }
             }
         }
-
+        #pragma omp parallel for schedule(dynamic,2) private(i) num_threads(nthreads)
         for (i = 0; i < n; ++i) {
             if(std::abs(x[i]-x_last[i])<accurancy) {
                 flag = false;
-                continue;
             }
 
         }
@@ -119,11 +132,35 @@ T* getTemperatureMatrix(unsigned int size, T left,T right, T top, T bottom, T ac
 }
 
 template <typename  T>
-T* getVectores(T* temp, unsigned int size)
+T* getVectores(T* temp, unsigned int size, unsigned int density, T left,T right, T top, T bottom, T k)
 {
-    T t [size][size][2] ;
-    T* t_ptr = &(***t);
+    if(size<density) density = size;
+    T* t_ptr = static_cast<T*>(malloc(sizeof(T)*4*density*density));
+    unsigned int step = size/density;
+    T xNxt,xPrv, yNxt,yPrv;
+    unsigned int x,y;
+    //#pragma omp parallel for schedule(dynamic,3) collapse(2) num_threads(nthreads)
+    for (unsigned int i = 0; i < density; i++) {
+        for (unsigned int j = 0; j < density; j++) {
+            x = i*step;
+            y = j*step;
+            *(t_ptr+(((i*size)+j)*4))=x;
+            *(t_ptr+(((i*size)+j)*4)+1)=y;
+            //check for borders
+            if(step>x) xPrv = left;
+            else xPrv = *(temp + ((x-step)*size)+y);
+            if(step>y) yPrv = top;
+            else yPrv = *(temp + (x*size)+y-step);
+            if(x+step>=size) xNxt = right;
+            else xNxt = *(temp + ((x+step)*size)+y);
+            if(y+step>=size) yNxt = bottom;
+            else yNxt = *(temp + (x*size)+y+step);
 
+            *(t_ptr+(((i*size)+j)*4)+2)=-k*((xNxt-xPrv)/(2*step));
+            *(t_ptr+(((i*size)+j)*4)+3)=-k*((yNxt-yPrv)/(2*step));
+        }
+    }
+    printvectors("Vectors:", t_ptr,4,density*density);
 }
 
 #endif //HEATMAP_HEAT_H
