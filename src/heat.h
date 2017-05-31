@@ -139,7 +139,7 @@ T* getVectores(T* temp, unsigned int size, unsigned int density, T left,T right,
     unsigned int step = size/density;
     T xNxt,xPrv, yNxt,yPrv;
     unsigned int x,y;
-    //#pragma omp parallel for schedule(dynamic,3) collapse(2) num_threads(nthreads)
+    #pragma omp parallel for schedule(dynamic) collapse(2) private(x,y,xNxt,xPrv, yNxt,yPrv) num_threads(nthreads)
     for (unsigned int i = 0; i < density; i++) {
         for (unsigned int j = 0; j < density; j++) {
             x = i*step;
