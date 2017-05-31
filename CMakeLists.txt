@@ -4,10 +4,10 @@ project(heatmap)
 set(CMAKE_CXX_STANDARD 11)
 
 set(SOURCE_FILES
-        main.cpp src/Liebmann.h src/heat.h)
+        main.cpp src/Liebmann.h src/heat.h src/topython.h src/heatmap.py)
 
 add_executable(heatmap ${SOURCE_FILES})
-
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lpython2.7")
 #Include Boost
 FIND_PACKAGE(Boost COMPONENTS program_options REQUIRED)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
@@ -18,3 +18,5 @@ if (OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
+
+

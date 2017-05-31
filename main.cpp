@@ -8,12 +8,15 @@
 
 
 #include <boost/program_options.hpp>
+#include <python2.7/Python.h>
 namespace po = boost::program_options;
 
 #include <iostream>
 #include <chrono>
 #include <omp.h>
 #include "src/heat.h"
+#include "src/topython.h"
+
 using namespace std;
 
 int main(int ac, const char* av[])
@@ -61,9 +64,12 @@ int main(int ac, const char* av[])
             double* temp = getTemperatureMatrix(size, left, right, top, bottom,acc);
             double t2 = omp_get_wtime();
             std::cout<< "Duration: "<<(t2-t1)*1000<<"ms" <<std::endl;
-            double* vectores = getVectores(temp,size,density, left, right, top, bottom,k);
+            unsigned int* numVectores = static_cast<unsigned int*>(malloc(sizeof(unsigned int)));
+            double* vectores = getVectores(temp,size,density, left, right, top, bottom,k,numVectores);
+            sendToPython(temp,vectores,size,*numVectores);
             free(vectores);
             free(temp);
+            free(numVectores);
 
         }
     }

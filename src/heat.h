@@ -132,14 +132,14 @@ T* getTemperatureMatrix(unsigned int size, T left,T right, T top, T bottom, T ac
 }
 
 template <typename  T>
-T* getVectores(T* temp, unsigned int size, unsigned int density, T left,T right, T top, T bottom, T k)
+T* getVectores(T* temp, unsigned int size, unsigned int density, T left,T right, T top, T bottom, T k, unsigned int* numVectores)
 {
     if(size<density) density = size;
     T* t_ptr = static_cast<T*>(malloc(sizeof(T)*4*density*density));
     unsigned int step = size/density;
     T xNxt,xPrv, yNxt,yPrv;
     unsigned int x,y;
-    #pragma omp parallel for schedule(dynamic) collapse(2) private(x,y,xNxt,xPrv, yNxt,yPrv) num_threads(nthreads)
+    //#pragma omp parallel for schedule(dynamic) collapse(2) private(x,y,xNxt,xPrv, yNxt,yPrv) num_threads(nthreads)
     for (unsigned int i = 0; i < density; i++) {
         for (unsigned int j = 0; j < density; j++) {
             x = i*step;
@@ -161,6 +161,8 @@ T* getVectores(T* temp, unsigned int size, unsigned int density, T left,T right,
         }
     }
     printvectors("Vectors:", t_ptr,4,density*density);
+    *numVectores = density*density;
+    return t_ptr;
 }
 
 #endif //HEATMAP_HEAT_H
