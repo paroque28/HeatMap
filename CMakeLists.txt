@@ -7,7 +7,12 @@ set(SOURCE_FILES
         main.cpp src/Liebmann.h src/heat.h src/topython.h src/heatmap.py)
 
 add_executable(heatmap ${SOURCE_FILES})
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lpython2.7")
+
+find_package (PythonLibs 2.7 REQUIRED)
+find_package (PythonInterp 2.7 REQUIRED)
+include_directories(${PYTHON_INCLUDE_DIRS})
+MESSAGE( STATUS "PYTHON_INCLUDE_DIRS: " ${PYTHON_INCLUDE_DIRS} )
+target_link_libraries(heatmap ${PYTHON_LIBRARIES})
 #Include Boost
 FIND_PACKAGE(Boost COMPONENTS program_options REQUIRED)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
@@ -19,4 +24,4 @@ if (OPENMP_FOUND)
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
-
+configure_file(src/heatmap.py heatmap.py COPYONLY)
