@@ -47,12 +47,12 @@ T* getTemperatureMatrix(const unsigned int size, T left,T right, T top, T bottom
     //set x to prom
     T prom = (left+right+top+bottom)/4;
 
-    //#pragma omp parallel for schedule(dynamic,5) private(i) num_threads(nthreads)
+    #pragma omp parallel for schedule(dynamic,5) private(i) num_threads(nthreads)
     for (i = 0; i < n; ++i) {
         x[i] = prom;
     }
     //set b vector
-    //#pragma omp parallel for schedule(dynamic,1) collapse(2) private(i,j,row) num_threads(nthreads)
+    #pragma omp parallel for schedule(dynamic,1) collapse(2) private(i,j,row) num_threads(nthreads)
     for (i = 0; i < size; ++i) {
         for (j = 0; j < size; ++j) {
             row = (i * size) + j; //rows on b, cols on A
@@ -102,7 +102,7 @@ T* getTemperatureMatrix(const unsigned int size, T left,T right, T top, T bottom
             }
         }
     }
-    print("b",b,size,size);
+    //print("b",b,size,size);
 
     // Liebmann
     bool flag = true;
@@ -121,7 +121,7 @@ T* getTemperatureMatrix(const unsigned int size, T left,T right, T top, T bottom
                 }
             }
         }
-        //#pragma omp parallel for schedule(dynamic,2) private(i) num_threads(nthreads)
+        #pragma omp parallel for schedule(dynamic,2) private(i) num_threads(nthreads)
         for (i = 0; i < n; ++i) {
             if(std::abs(x[i]-x_last[i])<accurancy) {
                 flag = false;
@@ -140,7 +140,7 @@ T* getTemperatureMatrix(const unsigned int size, T left,T right, T top, T bottom
 template <typename  T>
 T* getVectores(T* temp, unsigned int size, unsigned int density, T left,T right, T top, T bottom, T k, unsigned int* numVectores)
 {
-    if(size<density) density = size;
+    if(size<density||size <15) density = size;
     T* vectores = static_cast<T*>(malloc(sizeof(T)*4*density*density));
     unsigned int step = size/density;
     T xNxt,xPrv, yNxt,yPrv;
@@ -166,18 +166,10 @@ T* getVectores(T* temp, unsigned int size, unsigned int density, T left,T right,
 
             *(vectores+(((i*density)+j)*4)+2)=x-k*((xNxt-xPrv)/(2*step));
             *(vectores+(((i*density)+j)*4)+3)=y-k*((yNxt-yPrv)/(2*step));
-            T norma = *(vectores+(((i*density)+j)*4)+2) * *(vectores+(((i*density)+j)*4)+2) + *(vectores+(((i*density)+j)*4)+3) * *(vectores+(((i*density)+j)*4)+3);
-            if (normaMaxima< norma) normaMaxima = norma;
 
         }
     }
-    normaMaxima = sqrt(normaMaxima);
-    //for (int l = 0; l < density * density; ++l) {
-    //    *(vectores+(l*4)+2)  =(*(vectores+(l*4)+2) * (step/normaMaxima)) + *(vectores+(l*4));
-    //    *(vectores+(l*4)+3)  =(*(vectores+(l*4)+3) * (step/normaMaxima)) + *(vectores+(l*4)+1);
-
-   // }
-    printvectors("Vectors:", vectores,4,density*density);
+    printvectors("vectores",vectores,4,density*density);
     *numVectores = density*density;
     return vectores;
 }

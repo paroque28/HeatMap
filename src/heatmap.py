@@ -1,17 +1,15 @@
-import sys
-print(sys.version)
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib
+matplotlib.use('qt4agg')
+import matplotlib.pyplot as plt
 
+print("Welcome to MatPlotLib")
 def grafico(n,x,y,u,v,mat):
 
 
     mat.reverse()
-    print(mat)
 
     mat=np.array(mat)
-    print("este es n")
-    print(n)
 
     plt.title("Heat Map")
 

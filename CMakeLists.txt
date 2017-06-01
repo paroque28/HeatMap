@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 2.8)
 project(heatmap)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -8,8 +8,8 @@ set(SOURCE_FILES
 
 add_executable(heatmap ${SOURCE_FILES})
 
-find_package (PythonLibs 2.7 REQUIRED)
-find_package (PythonInterp 2.7 REQUIRED)
+find_package (PythonLibs REQUIRED)
+find_package (PythonInterp REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIRS})
 MESSAGE( STATUS "PYTHON_INCLUDE_DIRS: " ${PYTHON_INCLUDE_DIRS} )
 target_link_libraries(heatmap ${PYTHON_LIBRARIES})

@@ -4,7 +4,7 @@
 
 #ifndef HEATMAP_TOPYTHON_H
 #define HEATMAP_TOPYTHON_H
-#include <python2.7/Python.h>
+#include <python3.6m/Python.h>
 #include <string>
 #include <iostream>
 
@@ -23,7 +23,7 @@ void sendToPython(T* matriz, T* vectores, unsigned int size, unsigned int numVec
         if(i != size-1) pyMatr += ",";
     }
     pyMatr += "]";
-    std::cout<<pyMatr<<std::endl;
+    //std::cout<<pyMatr<<std::endl;
     std::string x = "[",y = "[",u = "[",v = "[";
     for (int k = 0; k < numVectors; ++k) {
         x += std::to_string(*(vectores+k*4));
@@ -37,7 +37,7 @@ void sendToPython(T* matriz, T* vectores, unsigned int size, unsigned int numVec
     }
     x += "]";y += "]";u += "]";v += "]";
     std::string pythoncmd = "grafico(" + std::to_string(size) + ", " + x + ", " + y + ", " + u + ", " + v + ", " + pyMatr + ")";
-    std::cout<< pythoncmd <<std::endl;
+    //std::cout<< pythoncmd <<std::endl;
 
     char * writable = new char[pythoncmd.size() + 1];
     std::copy(pythoncmd.begin(), pythoncmd.end(), writable);
@@ -47,9 +47,6 @@ void sendToPython(T* matriz, T* vectores, unsigned int size, unsigned int numVec
 
     // Indica que el actual directorio presenta modulos
     PyRun_SimpleString("import sys");
-    // Intente primero sin esto:
-    //PyRun_SimpleString("import numpy as np");
-    //PyRun_SimpleString("import matplotlib.pyplot as plt");
     PyRun_SimpleString("sys.path.append('./')");
 
     // Importa el modulo plot:
