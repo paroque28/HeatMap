@@ -4,7 +4,7 @@ project(heatmap)
 set(CMAKE_CXX_STANDARD 11)
 
 set(SOURCE_FILES
-        main.cpp src/Liebmann.h src/heat.h src/topython.h src/heatmap.py)
+        main.cpp src/heat.h src/topython.h src/heatmap.py)
 
 add_executable(heatmap ${SOURCE_FILES})
 

@@ -8,7 +8,7 @@
 
 
 #include <boost/program_options.hpp>
-#include <python2.7/Python.h>
+
 namespace po = boost::program_options;
 
 #include <iostream>
@@ -16,7 +16,6 @@ namespace po = boost::program_options;
 #include <omp.h>
 #include "src/heat.h"
 #include "src/topython.h"
-
 using namespace std;
 
 int main(int ac, const char* av[])
