@@ -4,7 +4,7 @@
 
 #ifndef HEATMAP_TOPYTHON_H
 #define HEATMAP_TOPYTHON_H
-#include <python3.6m/Python.h>
+#include <python2.7/Python.h>
 #include <string>
 #include <iostream>
 
