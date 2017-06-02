@@ -8,12 +8,14 @@
 
 
 #include <boost/program_options.hpp>
+
 namespace po = boost::program_options;
 
 #include <iostream>
 #include <chrono>
 #include <omp.h>
 #include "src/heat.h"
+#include "src/topython.h"
 using namespace std;
 
 int main(int ac, const char* av[])
@@ -28,7 +30,7 @@ int main(int ac, const char* av[])
                 ("right,r",po::value<double>()->default_value(20), "set right border temperature")
                 ("top,t",po::value<double>()->default_value(10), "set top border temperature")
                 ("bottom,b",po::value<double>()->default_value(10), "set bottom border temperature")
-                ("accurancy,a",po::value<double>()->default_value(0.1), "set accurancy for temperature")
+                ("accurancy,a",po::value<double>()->default_value(0.0001), "set accurancy for temperature")
                 ("density,d",po::value<uint>()->default_value(6), "set maximum density for vectors")
                 ("k,k",po::value<double>()->default_value(1), "set k' constant for Heat Transfer")
                 ;
@@ -58,12 +60,15 @@ int main(int ac, const char* av[])
             double acc = 0.1;
             if (vm.count("accurancy")) acc=vm["accurancy"].as<double>();
             double t1 = omp_get_wtime();
-            double* temp = getTemperatureMatrix(size, left, right, top, bottom,acc);
+            double* temp = getTemperatureMatrix(size, left, right, bottom, top ,acc);
             double t2 = omp_get_wtime();
             std::cout<< "Duration: "<<(t2-t1)*1000<<"ms" <<std::endl;
-            double* vectores = getVectores(temp,size,density, left, right, top, bottom,k);
+            unsigned int* numVectores = static_cast<unsigned int*>(malloc(sizeof(unsigned int)));
+            double* vectores = getVectores(temp,size,density, left, right, bottom, top, k,numVectores);
+            sendToPython(temp,vectores,size,*numVectores);
             free(vectores);
             free(temp);
+            free(numVectores);
 
         }
     }

@@ -5,14 +5,14 @@
 #ifndef HEATMAP_HEAT_H
 #define HEATMAP_HEAT_H
 #define nthreads 10
+#define PARALELO
 #include <iostream>
-
 template <typename  T>
 void print(const std::string& str, T* matrix, unsigned int rows, unsigned int cols) {
     std::cout << str << "\n";
     for(int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
-            printf(" %8.3f", matrix[(i*cols)+j]);
+            printf(" %8.3f", *(matrix+(i*cols)+j));
         }
         printf("\n");
     }
@@ -21,6 +21,7 @@ void print(const std::string& str, T* matrix, unsigned int rows, unsigned int co
 
 template <typename  T>
 void printvectors(const std::string& str, T* vector, unsigned int sizeVector, unsigned int sizeArray) {
+
     std::cout << str << "\n";
     for(int i = 0; i < sizeArray; i++) {
         for (int j = 0; j < sizeVector; ++j) {
@@ -33,74 +34,159 @@ void printvectors(const std::string& str, T* vector, unsigned int sizeVector, un
 
 
 template <typename  T>
-T* getTemperatureMatrix(unsigned int size, T left,T right, T top, T bottom, T accurancy)
+T* getTemperatureMatrix(const unsigned int size, T left,T right, T top, T bottom, T accurancy)
 {
-    unsigned int n = size*size;
-    T A [n][n], b[n], x_last[n], y[n];
+    const unsigned int n = size*size;
     T* x = static_cast<T*>(malloc(sizeof(T)*n));
-    T* A_ptr = &(**A);
-    memset (A_ptr,0,n*n*sizeof(T));
+
+    //set x to prom
+    unsigned int count =0;
+    T prom= 0;
+    if(top == top) {prom += top; count++;}
+    if(right == right) {prom += right; count++;}
+    if(left == left) {prom += left; count++;}
+    if(bottom == bottom) {prom += bottom; count++;}
+
+    prom/=count;
+    #ifdef PARALELO
+        std::cout<<"Paralelismo activo"<<std::endl;
+        #pragma omp parallel for schedule(dynamic)
+    #endif
+    for (int l = 0; l < n; ++l) {
+        x[l]=prom;
+    }
+    bool flag = true;
+    while (flag) {
+#ifdef PARALELO
+        #pragma omp parallel for schedule(dynamic) collapse(2)
+#endif
+        for (int i = 0; i < size; ++i) {
+            for (int j = 0; j < size; ++j) {
+                T sum[4] ;
+                unsigned int num = 4;
+                unsigned int index = 0;
+                bool izq = true, der=true , abajo = true, arriba = true;
+
+                    if (i == 0) {
+                        arriba = false;
+                        if (top != top)num--;
+                        else sum[index++] = top;
+                    }
+                    if (j == 0) {
+                        izq = false;
+                        if (left != left)num--;
+                        else sum[index++] = left;
+                    }
+                    if (i == size - 1) {
+                        abajo = false;
+                        if (bottom != bottom)num--;
+                        else sum[index++] = bottom;
+                    }
+                    if (j == size - 1) {
+                        der = false;
+                        if (right != right)num--;
+                        else sum[index++] = right;
+                    }
+
+                    if(abajo)sum[index++]=x[((i+1) * size) + (j)];
+                    if(arriba)sum[index++]=x[((i-1) * size) + (j)];
+                    if(der)sum[index++]=x[((i) * size) + (j+1)];
+                    if(izq)sum[index]=x[((i) * size) + (j-1)];
+
+                T temp = 0;
+                for (int k = 0; k < num; ++k) {
+                    temp += sum[k];
+                }
+                temp = temp /num;
+
+                flag = false;
+                if(!flag) flag = std::abs(x[((i) * size) + (j)] - temp) > accurancy;
+
+                x[((i) * size) + (j)] = temp;
+            }
+        }
+        //print("x",x,size,size);
+    }
+    print("x",x,size,size);
+
+    return x;
+}
+
+template <typename  T>
+T* getTemperatureMatrixLiebmann(const unsigned int size, T left,T right, T top, T bottom, T accurancy)
+{
+    const unsigned int n = size*size;
+    T* A  = static_cast<T*>(malloc(sizeof(T)*n*n));
+    T* b = static_cast<T*>(malloc(sizeof(T)*n));
+    T* x_last = static_cast<T*>(malloc(sizeof(T)*n));
+    T* y = static_cast<T*>(malloc(sizeof(T)*n));
+    T* x = static_cast<T*>(malloc(sizeof(T)*n));
+    memset (A,0,n*n*sizeof(T));
     unsigned int i = 0, j = 0, row = 0;
 
     //set x to prom
     T prom = (left+right+top+bottom)/4;
-
+ #ifdef PARALELO
     #pragma omp parallel for schedule(dynamic,5) private(i) num_threads(nthreads)
+ #endif
     for (i = 0; i < n; ++i) {
         x[i] = prom;
     }
     //set b vector
-    #pragma omp parallel for schedule(dynamic,1) collapse(2) private(i,j,row) num_threads(nthreads)
+    #ifdef PARALELO
+        #pragma omp parallel for schedule(dynamic,1) collapse(2) private(i,j,row) num_threads(nthreads)
+    #endif
     for (i = 0; i < size; ++i) {
         for (j = 0; j < size; ++j) {
             row = (i * size) + j; //rows on b, cols on A
-            A[row][row] = 4;
+            *(A+(row*n)+row) = 4;
             if (i == 0 || j == 0 || i == size - 1 || j == size - 1) {//bordes
                 if (i == 0) {//borde arriba
                     b[row] = top;
-                    A[row][(i+1)*size+(j)]=-1;
+                    *(A+(row*n)+(i+1)*size+(j))=-1;
                 } else if (i == size - 1){//borde abajo
                     b[row] = bottom;
-                    A[row][(i-1)*size+(j)]=-1;
+                    *(A+(row*n)+(i-1)*size+(j))=-1;
                 }
                 else{// bordes izq y der excepto si es borde de arriba y abajo)
-                    A[row][(i+1)*size+(j)]=-1;
-                    A[row][(i-1)*size+(j)]=-1;
+                    *(A+(row*n)+(i+1)*size+(j))=-1;
+                    *(A+(row*n)+(i-1)*size+(j))=-1;
                     if(j==0){
                         b[row] = left;
-                        A[row][(i)*size+(j+1)]=-1;
+                        *(A+(row*n)+(i)*size+(j+1))=-1;
                     }
                     else if(j==size-1){
                         b[row] = right;
-                        A[row][(i)*size+(j-1)]=-1;
+                        *(A+(row*n)+(i)*size+(j-1))=-1;
                     }
                     continue;
                 }
                 if(j==0) { //esquinas izquierda
                     b[row] += left;
-                    A[row][(i)*size+(j+1)]=-1;
+                    *(A+(row*n)+(i)*size+(j+1))=-1;
                 }
                 else if(j==size-1){ //esquinas derecha
                     b[row] += right;
-                    A[row][(i)*size+(j-1)]=-1;
+                    *(A+(row*n)+(i)*size+(j-1))=-1;
                 }
                 else// resto de los bordes
                 {
-                    A[row][(i)*size+(j+1)]=-1;
-                    A[row][(i)*size+(j-1)]=-1;
+                    *(A+(row*n)+(i)*size+(j+1))=-1;
+                    *(A+(row*n)+(i)*size+(j-1))=-1;
                 }
             }
             else
             {
                 b[row] = 0;
-                A[row][(i+1)*size+(j)]=-1;
-                A[row][(i-1)*size+(j)]=-1;
-                A[row][(i)*size+(j+1)]=-1;
-                A[row][(i)*size+(j-1)]=-1;
+                *(A+(row*n)+(i+1)*size+(j))=-1;
+                *(A+(row*n)+(i-1)*size+(j))=-1;
+                *(A+(row*n)+(i)*size+(j+1))=-1;
+                *(A+(row*n)+(i)*size+(j-1))=-1;
             }
         }
     }
-    print("b",b,size,size);
+    //print("A",A,n,n);
+    //print("b",b,size,size);
 
     // Liebmann
     bool flag = true;
@@ -109,17 +195,19 @@ T* getTemperatureMatrix(unsigned int size, T left,T right, T top, T bottom, T ac
         memcpy(x_last, x, n *  sizeof(T));
         for (i = 0; i < n; i++)
         {
-            y[i] = (b[i] / A[i][i]);
+            y[i] = (b[i] / *(A+(i*n)+i));
             for (j = 0; j < n; j++)
             {
                 if (j != i) {
-                    y[i] = y[i] - ((A[i][j] / A[i][i]) * x[j]);
+                    y[i] = y[i] - ((*(A+(i*n)+j) / (*(A+(i*n)+i))) * x[j]);
                     x[i] = y[i];
 
                 }
             }
         }
-        #pragma omp parallel for schedule(dynamic,2) private(i) num_threads(nthreads)
+#ifdef PARALELO
+    #pragma omp parallel for schedule(dynamic,2) private(i) num_threads(nthreads)
+#endif
         for (i = 0; i < n; ++i) {
             if(std::abs(x[i]-x_last[i])<accurancy) {
                 flag = false;
@@ -128,39 +216,49 @@ T* getTemperatureMatrix(unsigned int size, T left,T right, T top, T bottom, T ac
         }
     }
     print("x",x,size,size);
+    free(A);
+    free(b);
+    free(y);
+    free(x_last);
     return x;
 }
 
 template <typename  T>
-T* getVectores(T* temp, unsigned int size, unsigned int density, T left,T right, T top, T bottom, T k)
+T* getVectores(T* temp, unsigned int size, unsigned int density, T left,T right, T top, T bottom, T k, unsigned int* numVectores)
 {
-    if(size<density) density = size;
-    T* t_ptr = static_cast<T*>(malloc(sizeof(T)*4*density*density));
+    if(size<density||size <15) density = size;
+    T* vectores = static_cast<T*>(malloc(sizeof(T)*4*density*density));
     unsigned int step = size/density;
     T xNxt,xPrv, yNxt,yPrv;
+    T normaMaxima = 0;
     unsigned int x,y;
-    #pragma omp parallel for schedule(dynamic) collapse(2) private(x,y,xNxt,xPrv, yNxt,yPrv) num_threads(nthreads)
+    //#pragma omp parallel for schedule(dynamic) collapse(2) private(x,y,xNxt,xPrv, yNxt,yPrv) num_threads(nthreads)
     for (unsigned int i = 0; i < density; i++) {
         for (unsigned int j = 0; j < density; j++) {
-            x = i*step;
-            y = j*step;
-            *(t_ptr+(((i*size)+j)*4))=x;
-            *(t_ptr+(((i*size)+j)*4)+1)=y;
+            x = i*step + step/2;
+            y = j*step + step/2;
+            *(vectores+(((i*density)+j)*4))=x;
+            *(vectores+(((i*density)+j)*4)+1)=y;
             //check for borders
-            if(step>x) xPrv = left;
+            if(step>x) xPrv = top;
             else xPrv = *(temp + ((x-step)*size)+y);
-            if(step>y) yPrv = top;
+            if(step>y) yPrv = left;
             else yPrv = *(temp + (x*size)+y-step);
-            if(x+step>=size) xNxt = right;
+            if(x+step>=size) xNxt = bottom;
             else xNxt = *(temp + ((x+step)*size)+y);
-            if(y+step>=size) yNxt = bottom;
+            if(y+step>=size) yNxt = right;
             else yNxt = *(temp + (x*size)+y+step);
 
-            *(t_ptr+(((i*size)+j)*4)+2)=-k*((xNxt-xPrv)/(2*step));
-            *(t_ptr+(((i*size)+j)*4)+3)=-k*((yNxt-yPrv)/(2*step));
+
+            *(vectores+(((i*density)+j)*4)+2)=-k*((xNxt-xPrv));
+            *(vectores+(((i*density)+j)*4)+3)=-k*((yNxt-yPrv));
+            if(*(vectores+(((i*density)+j)*4)+2)!=*(vectores+(((i*density)+j)*4)+2)) *(vectores+(((i*density)+j)*4)+2) = 0;
+            if(*(vectores+(((i*density)+j)*4)+3)!=*(vectores+(((i*density)+j)*4)+3)) *(vectores+(((i*density)+j)*4)+3) = 0;
         }
     }
-    printvectors("Vectors:", t_ptr,4,density*density);
+    printvectors("vectores",vectores,4,density*density);
+    *numVectores = density*density;
+    return vectores;
 }
 
 #endif //HEATMAP_HEAT_H
