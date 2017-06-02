@@ -9,6 +9,13 @@
 #include <iostream>
 
 template <typename  T>
+/**
+ * Inicializa el interprete de Python y ejecuta el las funciones de graficacion con la matriz y vectores dados.
+ * @param matriz La matriz resultante.
+ * @param vectores Los vectores de temperatura resultantes.
+ * @param size Tamano de la matriz (nxn).
+ * @param numVectors Numero de vectores a pasar.
+ */
 void sendToPython(T* matriz, T* vectores, unsigned int size, unsigned int numVectors)
 {
     std::string pyMatr = "[";

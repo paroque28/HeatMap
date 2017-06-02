@@ -1,6 +1,9 @@
-//
-// Created by pablorod on 5/26/2017.
-//
+/**
+ * @file heat.h
+ * @brief Calculo de temperaturas en una matriz.
+ *
+ * Calcula las temperaturas de los diferentes puntos de una matriz que representan una placa delgada rectangular.
+ */
 
 #ifndef HEATMAP_HEAT_H
 #define HEATMAP_HEAT_H
@@ -8,6 +11,13 @@
 #define PARALELO
 #include <iostream>
 template <typename  T>
+/**
+ * Imprime  la matriz de manera ordenada y con formato.
+ * @param str
+ * @param matrix La matriz.
+ * @param rows Cantidad de filas de la matriz.
+ * @param cols Cantidad de columnas de la matriz.
+ */
 void print(const std::string& str, T* matrix, unsigned int rows, unsigned int cols) {
     std::cout << str << "\n";
     for(int i = 0; i < rows; i++) {
@@ -19,6 +29,13 @@ void print(const std::string& str, T* matrix, unsigned int rows, unsigned int co
     printf("\n");
 }
 
+/**
+ * Imprime un vector de forma ordenada y con formato.
+ * @param str
+ * @param vector El vector
+ * @param sizeVector Tamano del vector.
+ * @param sizeArray Tamano del arreglo.
+ */
 template <typename  T>
 void printvectors(const std::string& str, T* vector, unsigned int sizeVector, unsigned int sizeArray) {
 
@@ -32,7 +49,16 @@ void printvectors(const std::string& str, T* vector, unsigned int sizeVector, un
     printf("\n");
 }
 
-
+/**
+ * Calcula la temperatura de un punto dado.
+ * @param size Tamano de la matriz (nxn).
+ * @param left Temperatura en el borde izquierdo.
+ * @param right Temperatura en el borde derecho.
+ * @param top Termperatura en el borde superior.
+ * @param bottom Temperatura en el borde inferior.
+ * @param accurancy Error tolerado.
+ * @return
+ */
 template <typename  T>
 T* getTemperatureMatrix(const unsigned int size, T left,T right, T top, T bottom, T accurancy)
 {
@@ -112,6 +138,16 @@ T* getTemperatureMatrix(const unsigned int size, T left,T right, T top, T bottom
     return x;
 }
 
+/**
+ * Calcula la temperatura de la matriz utilizando el metodo de Liebmann.
+ * @param size Tamano de la matriz (nxn).
+ * @param left Temperatura en el borde izquierdo.
+ * @param right Temperatura en el borde derecho.
+ * @param top Temperatura en el borde superior.
+ * @param bottom Temperatura en el borde inferior.
+ * @param accurancy Error tolerado.
+ * @return
+ */
 template <typename  T>
 T* getTemperatureMatrixLiebmann(const unsigned int size, T left,T right, T top, T bottom, T accurancy)
 {
@@ -224,6 +260,19 @@ T* getTemperatureMatrixLiebmann(const unsigned int size, T left,T right, T top, 
 }
 
 template <typename  T>
+/**
+ * Calcula los vectores de temperatura.
+ * @param temp Matriz de temperaturas.
+ * @param size Tamano de la matriz (nxn).
+ * @param density Cantidad de vectores que quiere ver.
+ * @param left Temperatura en el borde izquierdo.
+ * @param right Temperatura en el borde derecho.
+ * @param top Temperatura en el borde superior.
+ * @param bottom Temperatura en el borde inferior.
+ * @param k Constante fisica.
+ * @param numVectores Return de vectores.
+ * @return
+ */
 T* getVectores(T* temp, unsigned int size, unsigned int density, T left,T right, T top, T bottom, T k, unsigned int* numVectores)
 {
     if(size<density||size <15) density = size;
