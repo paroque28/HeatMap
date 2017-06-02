@@ -10,7 +10,7 @@
 
 template <typename  T>
 /**
- * Inicializa el interprete de Python y ejecuta el las funciones de graficacion con la matriz y vectores dados.
+ * @brief Inicializa el interprete de Python y ejecuta el las funciones de graficacion con la matriz y vectores dados.
  * @param matriz La matriz resultante.
  * @param vectores Los vectores de temperatura resultantes.
  * @param size Tamano de la matriz (nxn).
