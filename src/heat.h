@@ -5,7 +5,7 @@
 #ifndef HEATMAP_HEAT_H
 #define HEATMAP_HEAT_H
 #define nthreads 10
-#define PARALELO
+//#define PARALELO
 #include <iostream>
 template <typename  T>
 void print(const std::string& str, T* matrix, unsigned int rows, unsigned int cols) {
