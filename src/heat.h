@@ -5,6 +5,7 @@
 #ifndef HEATMAP_HEAT_H
 #define HEATMAP_HEAT_H
 #define nthreads 10
+#define PARALELO
 #include <iostream>
 template <typename  T>
 void print(const std::string& str, T* matrix, unsigned int rows, unsigned int cols) {
@@ -47,14 +48,18 @@ T* getTemperatureMatrix(const unsigned int size, T left,T right, T top, T bottom
     if(bottom == bottom) {prom += bottom; count++;}
 
     prom/=count;
-    #pragma omp parallel for schedule(dynamic)
+    #ifdef PARALELO
+        std::cout<<"Paralelismo activo"<<std::endl;
+        #pragma omp parallel for schedule(dynamic)
+    #endif
     for (int l = 0; l < n; ++l) {
         x[l]=prom;
     }
     bool flag = true;
     while (flag) {
-
-      //  #pragma omp parallel for schedule(dynamic) collapse(2)
+#ifdef PARALELO
+        #pragma omp parallel for schedule(dynamic) collapse(2)
+#endif
         for (int i = 0; i < size; ++i) {
             for (int j = 0; j < size; ++j) {
                 T sum[4] ;
@@ -121,13 +126,16 @@ T* getTemperatureMatrixLiebmann(const unsigned int size, T left,T right, T top, 
 
     //set x to prom
     T prom = (left+right+top+bottom)/4;
-
-#pragma omp parallel for schedule(dynamic,5) private(i) num_threads(nthreads)
+ #ifdef PARALELO
+    #pragma omp parallel for schedule(dynamic,5) private(i) num_threads(nthreads)
+ #endif
     for (i = 0; i < n; ++i) {
         x[i] = prom;
     }
     //set b vector
-#pragma omp parallel for schedule(dynamic,1) collapse(2) private(i,j,row) num_threads(nthreads)
+    #ifdef PARALELO
+        #pragma omp parallel for schedule(dynamic,1) collapse(2) private(i,j,row) num_threads(nthreads)
+    #endif
     for (i = 0; i < size; ++i) {
         for (j = 0; j < size; ++j) {
             row = (i * size) + j; //rows on b, cols on A
@@ -197,7 +205,9 @@ T* getTemperatureMatrixLiebmann(const unsigned int size, T left,T right, T top, 
                 }
             }
         }
-#pragma omp parallel for schedule(dynamic,2) private(i) num_threads(nthreads)
+#ifdef PARALELO
+    #pragma omp parallel for schedule(dynamic,2) private(i) num_threads(nthreads)
+#endif
         for (i = 0; i < n; ++i) {
             if(std::abs(x[i]-x_last[i])<accurancy) {
                 flag = false;
