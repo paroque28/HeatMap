@@ -12,11 +12,10 @@ def grafico(n,x,y,u,v,mat):
 
     plt.imshow(mat, interpolation='bilinear', extent=[0,n-1,0,n-1])
     plt.colorbar().set_label('Temperature')
-    if x==u or y==v or x==[] or y==[] or u==[] or v==[]:
+
+    if x!=[] or y!=[] or u!=[] or v!=[]:
         plt.quiver(x, y, u, v, alpha=.5)
         plt.quiver(x, y, u, v, edgecolor='k', facecolor='None', linewidth=.5)
-
-
 
     plt.show()
 

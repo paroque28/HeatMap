@@ -26,7 +26,7 @@ void sendToPython(T* matriz, T* vectores, unsigned int size, unsigned int numVec
     //std::cout<<pyMatr<<std::endl;
     std::string x = "[",y = "[",u = "[",v = "[";
     for (int k = 0; k < numVectors; ++k) {
-        if(*(vectores+k*4+3) != 0 && *(vectores+k*4+2) != 0) {
+
             x += std::to_string(*(vectores + k * 4 + 1));
             y += std::to_string(*(vectores + k * 4));
             u += std::to_string(*(vectores + k * 4 + 3));
@@ -37,7 +37,7 @@ void sendToPython(T* matriz, T* vectores, unsigned int size, unsigned int numVec
                 u += ",";
                 v += ",";
             }
-        }
+
     }
     x += "]";y += "]";u += "]";v += "]";
     std::string pythoncmd = "grafico(" + std::to_string(size) + ", " + x + ", " + y + ", " + u + ", " + v + ", " + pyMatr + ")";
