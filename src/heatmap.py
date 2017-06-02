@@ -1,6 +1,4 @@
 import numpy as np
-import matplotlib
-matplotlib.use('qt4agg')
 import matplotlib.pyplot as plt
 
 print("Welcome to MatPlotLib")

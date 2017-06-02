@@ -8,7 +8,7 @@
 #ifndef HEATMAP_HEAT_H
 #define HEATMAP_HEAT_H
 #define nthreads 10
-#define PARALELO
+//#define PARALELO
 #include <iostream>
 template <typename  T>
 /**
