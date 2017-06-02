@@ -36,6 +36,81 @@ template <typename  T>
 T* getTemperatureMatrix(const unsigned int size, T left,T right, T top, T bottom, T accurancy)
 {
     const unsigned int n = size*size;
+    T* x = static_cast<T*>(malloc(sizeof(T)*n));
+
+    //set x to prom
+    unsigned int count =0;
+    T prom= 0;
+    if(top == top) {prom += top; count++;}
+    if(right == right) {prom += right; count++;}
+    if(left == left) {prom += left; count++;}
+    if(bottom == bottom) {prom += bottom; count++;}
+
+    prom/=count;
+    #pragma omp parallel for schedule(dynamic)
+    for (int l = 0; l < n; ++l) {
+        x[l]=prom;
+    }
+    bool flag = true;
+    while (flag) {
+
+      //  #pragma omp parallel for schedule(dynamic) collapse(2)
+        for (int i = 0; i < size; ++i) {
+            for (int j = 0; j < size; ++j) {
+                T sum[4] ;
+                unsigned int num = 4;
+                unsigned int index = 0;
+                bool izq = true, der=true , abajo = true, arriba = true;
+
+                    if (i == 0) {
+                        arriba = false;
+                        if (top != top)num--;
+                        else sum[index++] = top;
+                    }
+                    if (j == 0) {
+                        izq = false;
+                        if (left != left)num--;
+                        else sum[index++] = left;
+                    }
+                    if (i == size - 1) {
+                        abajo = false;
+                        if (bottom != bottom)num--;
+                        else sum[index++] = bottom;
+                    }
+                    if (j == size - 1) {
+                        der = false;
+                        if (right != right)num--;
+                        else sum[index++] = right;
+                    }
+
+                    if(abajo)sum[index++]=x[((i+1) * size) + (j)];
+                    if(arriba)sum[index++]=x[((i-1) * size) + (j)];
+                    if(der)sum[index++]=x[((i) * size) + (j+1)];
+                    if(izq)sum[index]=x[((i) * size) + (j-1)];
+
+                T temp = 0;
+                for (int k = 0; k < num; ++k) {
+                    temp += sum[k];
+                }
+                temp = temp /num;
+
+                flag = false;
+                if(!flag) flag = std::abs(x[((i) * size) + (j)] - temp) > accurancy;
+
+                x[((i) * size) + (j)] = temp;
+            }
+        }
+        //print("x",x,size,size);
+    }
+    print("x",x,size,size);
+
+    return x;
+}
+
+template <typename  T>
+T* getTemperatureMatrixLiebmann(const unsigned int size, T left,T right, T top, T bottom, T accurancy)
+{
+    const unsigned int n = size*size;
     T* A  = static_cast<T*>(malloc(sizeof(T)*n*n));
     T* b = static_cast<T*>(malloc(sizeof(T)*n));
     T* x_last = static_cast<T*>(malloc(sizeof(T)*n));
@@ -47,12 +122,12 @@ T* getTemperatureMatrix(const unsigned int size, T left,T right, T top, T bottom
     //set x to prom
     T prom = (left+right+top+bottom)/4;
 
-    #pragma omp parallel for schedule(dynamic,5) private(i) num_threads(nthreads)
+#pragma omp parallel for schedule(dynamic,5) private(i) num_threads(nthreads)
     for (i = 0; i < n; ++i) {
         x[i] = prom;
     }
     //set b vector
-    #pragma omp parallel for schedule(dynamic,1) collapse(2) private(i,j,row) num_threads(nthreads)
+#pragma omp parallel for schedule(dynamic,1) collapse(2) private(i,j,row) num_threads(nthreads)
     for (i = 0; i < size; ++i) {
         for (j = 0; j < size; ++j) {
             row = (i * size) + j; //rows on b, cols on A
@@ -102,6 +177,7 @@ T* getTemperatureMatrix(const unsigned int size, T left,T right, T top, T bottom
             }
         }
     }
+    //print("A",A,n,n);
     //print("b",b,size,size);
 
     // Liebmann
@@ -121,7 +197,7 @@ T* getTemperatureMatrix(const unsigned int size, T left,T right, T top, T bottom
                 }
             }
         }
-        #pragma omp parallel for schedule(dynamic,2) private(i) num_threads(nthreads)
+#pragma omp parallel for schedule(dynamic,2) private(i) num_threads(nthreads)
         for (i = 0; i < n; ++i) {
             if(std::abs(x[i]-x_last[i])<accurancy) {
                 flag = false;
@@ -154,19 +230,20 @@ T* getVectores(T* temp, unsigned int size, unsigned int density, T left,T right,
             *(vectores+(((i*density)+j)*4))=x;
             *(vectores+(((i*density)+j)*4)+1)=y;
             //check for borders
-            if(step>x) xPrv = left;
+            if(step>x) xPrv = top;
             else xPrv = *(temp + ((x-step)*size)+y);
-            if(step>y) yPrv = top;
+            if(step>y) yPrv = left;
             else yPrv = *(temp + (x*size)+y-step);
-            if(x+step>=size) xNxt = right;
+            if(x+step>=size) xNxt = bottom;
             else xNxt = *(temp + ((x+step)*size)+y);
-            if(y+step>=size) yNxt = bottom;
+            if(y+step>=size) yNxt = right;
             else yNxt = *(temp + (x*size)+y+step);
 
 
-            *(vectores+(((i*density)+j)*4)+2)=x-k*((xNxt-xPrv)/(2*step));
-            *(vectores+(((i*density)+j)*4)+3)=y-k*((yNxt-yPrv)/(2*step));
-
+            *(vectores+(((i*density)+j)*4)+2)=-k*((xNxt-xPrv));
+            *(vectores+(((i*density)+j)*4)+3)=-k*((yNxt-yPrv));
+            if(*(vectores+(((i*density)+j)*4)+2)!=*(vectores+(((i*density)+j)*4)+2)) *(vectores+(((i*density)+j)*4)+2) = 0;
+            if(*(vectores+(((i*density)+j)*4)+3)!=*(vectores+(((i*density)+j)*4)+3)) *(vectores+(((i*density)+j)*4)+3) = 0;
         }
     }
     printvectors("vectores",vectores,4,density*density);

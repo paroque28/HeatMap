@@ -26,10 +26,10 @@ void sendToPython(T* matriz, T* vectores, unsigned int size, unsigned int numVec
     //std::cout<<pyMatr<<std::endl;
     std::string x = "[",y = "[",u = "[",v = "[";
     for (int k = 0; k < numVectors; ++k) {
-        x += std::to_string(*(vectores+k*4));
-        y += std::to_string(*(vectores+k*4+1));
-        u += std::to_string(*(vectores+k*4+2));
-        v += std::to_string(*(vectores+k*4+3));
+        x += std::to_string(*(vectores+k*4+1));
+        y += std::to_string(*(vectores+k*4));
+        u += std::to_string(*(vectores+k*4+3));
+        v += std::to_string(*(vectores+k*4+2));
         if(k != (numVectors)-1)
         {
             x += ",";y += ",";u += ",";v += ",";
